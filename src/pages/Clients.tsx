@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Loader2, Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Search, Download } from 'lucide-react';
+import { exportToCsv } from '@/lib/exportCsv';
 
 export default function Clients() {
   const { profile, canEdit } = useAuth();
@@ -72,27 +73,36 @@ export default function Clients() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Clientes</h2>
-        {canEdit() && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild><Button onClick={openNew}><Plus className="mr-2 h-4 w-4" />Novo Cliente</Button></DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>{editClient ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle></DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2"><Label>Nome *</Label><Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>
-                <div className="space-y-2"><Label>WhatsApp</Label><Input value={form.whatsapp} onChange={e => setForm(p => ({ ...p, whatsapp: e.target.value }))} placeholder="85988887777" /></div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Cidade</Label><Input value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} /></div>
-                  <div className="space-y-2"><Label>Bairro</Label><Input value={form.neighborhood} onChange={e => setForm(p => ({ ...p, neighborhood: e.target.value }))} /></div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => exportToCsv(
+            'clientes.csv',
+            ['Nome', 'WhatsApp', 'Cidade', 'Bairro', 'Canal', 'Observações'],
+            filtered.map(c => [c.name, c.whatsapp ?? '', c.city ?? '', c.neighborhood ?? '', c.channel ?? '', c.notes ?? ''])
+          )} disabled={filtered.length === 0}>
+            <Download className="mr-2 h-4 w-4" />Exportar CSV
+          </Button>
+          {canEdit() && (
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild><Button onClick={openNew}><Plus className="mr-2 h-4 w-4" />Novo Cliente</Button></DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>{editClient ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle></DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2"><Label>Nome *</Label><Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>
+                  <div className="space-y-2"><Label>WhatsApp</Label><Input value={form.whatsapp} onChange={e => setForm(p => ({ ...p, whatsapp: e.target.value }))} placeholder="85988887777" /></div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Cidade</Label><Input value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} /></div>
+                    <div className="space-y-2"><Label>Bairro</Label><Input value={form.neighborhood} onChange={e => setForm(p => ({ ...p, neighborhood: e.target.value }))} /></div>
+                  </div>
+                  <div className="space-y-2"><Label>Canal</Label><Input value={form.channel} onChange={e => setForm(p => ({ ...p, channel: e.target.value }))} placeholder="Instagram, WhatsApp..." /></div>
+                  <div className="space-y-2"><Label>Observações</Label><Input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /></div>
+                  <Button onClick={save} className="w-full" disabled={saving}>
+                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Salvar
+                  </Button>
                 </div>
-                <div className="space-y-2"><Label>Canal</Label><Input value={form.channel} onChange={e => setForm(p => ({ ...p, channel: e.target.value }))} placeholder="Instagram, WhatsApp..." /></div>
-                <div className="space-y-2"><Label>Observações</Label><Input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /></div>
-                <Button onClick={save} className="w-full" disabled={saving}>
-                  {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Salvar
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </div>
       <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" placeholder="Buscar clientes..." value={search} onChange={e => setSearch(e.target.value)} /></div>
       <div className="rounded-lg border bg-card">

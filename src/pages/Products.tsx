@@ -10,8 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import CurrencyInput from '@/components/shared/CurrencyInput';
 import { toast } from 'sonner';
-import { Loader2, Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Search, Download } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
+import { exportToCsv } from '@/lib/exportCsv';
 
 export default function Products() {
   const { profile, canEdit } = useAuth();
@@ -91,43 +92,52 @@ export default function Products() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Produtos</h2>
-        {canEdit() && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild><Button onClick={openNew}><Plus className="mr-2 h-4 w-4" />Novo Produto</Button></DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader><DialogTitle>{editProd ? 'Editar Produto' : 'Novo Produto'}</DialogTitle></DialogHeader>
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-                <div className="space-y-2"><Label>Nome *</Label><Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>
-                <div className="space-y-2">
-                  <Label>Categoria *</Label>
-                  <Select value={form.category} onValueChange={v => setForm(p => ({ ...p, category: v }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="Impressão 3D">Impressão 3D</SelectItem><SelectItem value="Laser">Laser</SelectItem></SelectContent>
-                  </Select>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => exportToCsv(
+            'produtos.csv',
+            ['Nome', 'Categoria', 'Material', 'Cor Padrão', 'Tempo Médio (h)', 'Peso Médio (g)', 'Preço Fixo', 'Observações'],
+            filtered.map(p => [p.name, p.category, p.materials?.name ?? '', p.default_color ?? '', p.avg_time_h?.toString() ?? '', p.avg_weight_g?.toString() ?? '', p.fixed_price?.toString() ?? '', p.notes ?? ''])
+          )} disabled={filtered.length === 0}>
+            <Download className="mr-2 h-4 w-4" />Exportar CSV
+          </Button>
+          {canEdit() && (
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild><Button onClick={openNew}><Plus className="mr-2 h-4 w-4" />Novo Produto</Button></DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader><DialogTitle>{editProd ? 'Editar Produto' : 'Novo Produto'}</DialogTitle></DialogHeader>
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                  <div className="space-y-2"><Label>Nome *</Label><Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>
+                  <div className="space-y-2">
+                    <Label>Categoria *</Label>
+                    <Select value={form.category} onValueChange={v => setForm(p => ({ ...p, category: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="Impressão 3D">Impressão 3D</SelectItem><SelectItem value="Laser">Laser</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Material Padrão</Label>
+                    <Select value={form.default_material_id} onValueChange={v => setForm(p => ({ ...p, default_material_id: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>{materials.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Cor Padrão</Label><Input value={form.default_color} onChange={e => setForm(p => ({ ...p, default_color: e.target.value }))} /></div>
+                    <div className="space-y-2"><Label>Tempo Médio (h)</Label><Input type="number" step="0.1" value={form.avg_time_h} onChange={e => setForm(p => ({ ...p, avg_time_h: e.target.value }))} /></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Peso Médio (g)</Label><Input type="number" step="0.1" value={form.avg_weight_g} onChange={e => setForm(p => ({ ...p, avg_weight_g: e.target.value }))} /></div>
+                    <div className="space-y-2"><Label>Preço Fixo</Label><CurrencyInput value={form.fixed_price} onCustomValueChange={v => setForm(p => ({ ...p, fixed_price: v }))} /></div>
+                  </div>
+                  <div className="space-y-2"><Label>Observações</Label><Input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /></div>
+                  <Button onClick={save} className="w-full" disabled={saving}>
+                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Salvar
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label>Material Padrão</Label>
-                  <Select value={form.default_material_id} onValueChange={v => setForm(p => ({ ...p, default_material_id: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                    <SelectContent>{materials.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Cor Padrão</Label><Input value={form.default_color} onChange={e => setForm(p => ({ ...p, default_color: e.target.value }))} /></div>
-                  <div className="space-y-2"><Label>Tempo Médio (h)</Label><Input type="number" step="0.1" value={form.avg_time_h} onChange={e => setForm(p => ({ ...p, avg_time_h: e.target.value }))} /></div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Peso Médio (g)</Label><Input type="number" step="0.1" value={form.avg_weight_g} onChange={e => setForm(p => ({ ...p, avg_weight_g: e.target.value }))} /></div>
-                  <div className="space-y-2"><Label>Preço Fixo</Label><CurrencyInput value={form.fixed_price} onCustomValueChange={v => setForm(p => ({ ...p, fixed_price: v }))} /></div>
-                </div>
-                <div className="space-y-2"><Label>Observações</Label><Input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /></div>
-                <Button onClick={save} className="w-full" disabled={saving}>
-                  {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Salvar
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </div>
       <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" placeholder="Buscar produtos..." value={search} onChange={e => setSearch(e.target.value)} /></div>
       <div className="rounded-lg border bg-card">
