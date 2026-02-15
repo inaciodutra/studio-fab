@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, AppRole } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,10 +9,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import CurrencyInput from '@/components/shared/CurrencyInput';
 import { toast } from 'sonner';
-import { Loader2, Plus, Pencil } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, UserPlus, Users } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
+
+interface Invitation {
+  id: string;
+  email: string;
+  role: AppRole;
+  status: string;
+  created_at: string;
+}
+
+interface TeamMember {
+  id: string;
+  name: string;
+  roles: AppRole[];
+}
 
 export default function Config() {
   const { profile } = useAuth();
@@ -25,21 +41,85 @@ export default function Config() {
   const [matName, setMatName] = useState('');
   const [matPrice, setMatPrice] = useState<number | undefined>();
 
+  // Team state
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<AppRole>('OPERADOR');
+  const [inviting, setInviting] = useState(false);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+
   const workspaceId = profile?.workspace_id;
+
+  const fetchTeam = async () => {
+    if (!workspaceId) return;
+    const [profilesRes, rolesRes, invitesRes] = await Promise.all([
+      supabase.from('profiles').select('id, name').eq('workspace_id', workspaceId),
+      supabase.from('user_roles').select('user_id, role'),
+      supabase.from('invitations').select('*').eq('workspace_id', workspaceId).order('created_at', { ascending: false }),
+    ]);
+
+    const profiles = profilesRes.data ?? [];
+    const roles = rolesRes.data ?? [];
+    const members: TeamMember[] = profiles.map(p => ({
+      id: p.id,
+      name: p.name,
+      roles: roles.filter(r => r.user_id === p.id).map(r => r.role as AppRole),
+    }));
+    setTeamMembers(members);
+    setInvitations((invitesRes.data as any[] ?? []).map((i: any) => ({
+      id: i.id,
+      email: i.email,
+      role: i.role as AppRole,
+      status: i.status,
+      created_at: i.created_at,
+    })));
+  };
 
   useEffect(() => {
     if (!workspaceId) return;
-    const fetch = async () => {
+    const fetchData = async () => {
       const [configRes, matRes] = await Promise.all([
         supabase.from('config').select('*').eq('workspace_id', workspaceId).maybeSingle(),
         supabase.from('materials').select('*').eq('workspace_id', workspaceId).order('name'),
       ]);
       setConfig(configRes.data);
       setMaterials(matRes.data ?? []);
+      await fetchTeam();
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [workspaceId]);
+
+  const sendInvite = async () => {
+    if (!inviteEmail || !workspaceId) return;
+    setInviting(true);
+    const { error } = await supabase.from('invitations').insert({
+      workspace_id: workspaceId,
+      email: inviteEmail.toLowerCase().trim(),
+      role: inviteRole,
+      invited_by: profile!.id,
+    } as any);
+    setInviting(false);
+    if (error) {
+      if (error.code === '23505') toast.error('Este email já foi convidado.');
+      else toast.error(error.message);
+    } else {
+      toast.success(`Convite enviado para ${inviteEmail}!`);
+      setInviteEmail('');
+      setInviteDialogOpen(false);
+      fetchTeam();
+    }
+  };
+
+  const cancelInvite = async (id: string) => {
+    const { error } = await supabase.from('invitations').update({ status: 'cancelled' } as any).eq('id', id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success('Convite cancelado.');
+      fetchTeam();
+    }
+  };
 
   const saveConfig = async () => {
     if (!config) return;
@@ -96,6 +176,7 @@ export default function Config() {
         <TabsList>
           <TabsTrigger value="costs">Custos Gerais</TabsTrigger>
           <TabsTrigger value="materials">Materiais</TabsTrigger>
+          <TabsTrigger value="team"><Users className="mr-2 h-4 w-4" />Equipe</TabsTrigger>
         </TabsList>
         <TabsContent value="costs">
           <Card>
@@ -170,6 +251,98 @@ export default function Config() {
                   )}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="team">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Equipe do Workspace</CardTitle>
+              <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm"><UserPlus className="mr-2 h-4 w-4" />Convidar</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Convidar Membro</DialogTitle></DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Email</Label>
+                      <Input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="email@exemplo.com" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Papel</Label>
+                      <Select value={inviteRole} onValueChange={v => setInviteRole(v as AppRole)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ADMIN">Admin</SelectItem>
+                          <SelectItem value="OPERADOR">Operador</SelectItem>
+                          <SelectItem value="VISUALIZADOR">Visualizador</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <p className="text-sm text-muted-foreground">O usuário convidado precisará criar uma conta com este email. Ao se cadastrar, será automaticamente adicionado ao seu workspace.</p>
+                    <Button onClick={sendInvite} disabled={inviting || !inviteEmail} className="w-full">
+                      {inviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Enviar Convite
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h4 className="text-sm font-medium mb-3">Membros Atuais</h4>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Papel</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {teamMembers.map(m => (
+                      <TableRow key={m.id}>
+                        <TableCell className="font-medium">{m.name}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            {m.roles.map(r => (
+                              <Badge key={r} variant={r === 'ADMIN' ? 'default' : 'secondary'}>{r}</Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              {invitations.filter(i => i.status === 'pending').length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-3">Convites Pendentes</h4>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Papel</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invitations.filter(i => i.status === 'pending').map(i => (
+                        <TableRow key={i.id}>
+                          <TableCell>{i.email}</TableCell>
+                          <TableCell><Badge variant="outline">{i.role}</Badge></TableCell>
+                          <TableCell className="text-muted-foreground">{new Date(i.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" onClick={() => cancelInvite(i.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
