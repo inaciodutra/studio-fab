@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import CurrencyInput from '@/components/shared/CurrencyInput';
 import { toast } from 'sonner';
-import { Loader2, Plus, Pencil, Trash2, Search, Download, ImagePlus, X } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Search, Download, ImagePlus, X, Sparkles } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
 import { exportToCsv } from '@/lib/exportCsv';
 
@@ -34,6 +34,7 @@ export default function Products() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [generatingAi, setGeneratingAi] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const workspaceId = profile?.workspace_id;
@@ -108,6 +109,41 @@ export default function Products() {
     await supabase.from('products').update({ image_url: null }).eq('id', productId);
     toast.success('Imagem removida!');
     fetchData();
+  };
+
+  const generateAiImage = async () => {
+    if (!editProd?.id || !workspaceId) {
+      toast.error('Salve o produto primeiro para gerar uma imagem com IA');
+      return;
+    }
+    if (!form.name.trim()) {
+      toast.error('Preencha o nome do produto');
+      return;
+    }
+    setGeneratingAi(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-product-image', {
+        body: {
+          productName: form.name,
+          category: form.category,
+          productId: editProd.id,
+          workspaceId,
+        },
+      });
+      if (error) throw error;
+      if (data?.imageUrl) {
+        setImagePreview(data.imageUrl + '?t=' + Date.now());
+        setImageFile(null);
+        toast.success('Imagem gerada com IA!');
+        fetchData();
+      } else {
+        toast.error(data?.error || 'Erro ao gerar imagem');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao gerar imagem');
+    } finally {
+      setGeneratingAi(false);
+    }
   };
 
   const save = async () => {
@@ -221,11 +257,24 @@ export default function Products() {
                         onChange={handleImageSelect}
                         className="hidden"
                       />
-                      {imagePreview && (
-                        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                          Trocar imagem
-                        </Button>
-                      )}
+                      <div className="flex flex-col gap-2">
+                        {imagePreview && (
+                          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                            Trocar imagem
+                          </Button>
+                        )}
+                        {editProd && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={generateAiImage}
+                            disabled={generatingAi || !form.name.trim()}
+                          >
+                            {generatingAi ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                            {generatingAi ? 'Gerando...' : 'Gerar com IA'}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
