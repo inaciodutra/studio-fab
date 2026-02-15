@@ -14,6 +14,7 @@ import Products from "@/pages/Products";
 import Stock from "@/pages/Stock";
 import Orders from "@/pages/Orders";
 import Reports from "@/pages/Reports";
+import Import from "@/pages/Import";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/products" element={<Products />} />
               <Route path="/stock" element={<Stock />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/import" element={<Import />} />
               <Route path="/config" element={<ProtectedRoute requiredRole="ADMIN"><Config /></ProtectedRoute>} />
             </Route>
           </Route>

@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
   LayoutDashboard, Settings, Users, Package, Warehouse,
-  ShoppingCart, BarChart3, Printer, LogOut, X
+  ShoppingCart, BarChart3, Printer, LogOut, X, FileUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,7 @@ const navItems = [
   { to: '/products', label: 'Produtos', icon: Package },
   { to: '/stock', label: 'Estoque', icon: Warehouse },
   { to: '/reports', label: 'Relatórios', icon: BarChart3 },
+  { to: '/import', label: 'Importar CSV', icon: FileUp },
   { to: '/config', label: 'Configurações', icon: Settings, adminOnly: true },
 ];
 
