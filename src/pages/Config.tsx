@@ -121,6 +121,26 @@ export default function Config() {
     }
   };
 
+  const changeRole = async (userId: string, newRole: AppRole) => {
+    // Delete existing roles and insert new one
+    const { error: delError } = await supabase.from('user_roles').delete().eq('user_id', userId);
+    if (delError) { toast.error(delError.message); return; }
+    const { error: insError } = await supabase.from('user_roles').insert({ user_id: userId, role: newRole });
+    if (insError) { toast.error(insError.message); return; }
+    toast.success('Papel atualizado!');
+    fetchTeam();
+  };
+
+  const removeMember = async (userId: string, memberName: string) => {
+    if (!confirm(`Tem certeza que deseja remover "${memberName}" do workspace?`)) return;
+    // Delete roles first, then profile
+    await supabase.from('user_roles').delete().eq('user_id', userId);
+    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${memberName} removido do workspace.`);
+    fetchTeam();
+  };
+
   const saveConfig = async () => {
     if (!config) return;
     setSaving(true);
@@ -293,24 +313,48 @@ export default function Config() {
                 <h4 className="text-sm font-medium mb-3">Membros Atuais</h4>
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                     <TableRow>
                       <TableHead>Nome</TableHead>
                       <TableHead>Papel</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {teamMembers.map(m => (
-                      <TableRow key={m.id}>
-                        <TableCell className="font-medium">{m.name}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            {m.roles.map(r => (
-                              <Badge key={r} variant={r === 'ADMIN' ? 'default' : 'secondary'}>{r}</Badge>
-                            ))}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {teamMembers.map(m => {
+                      const isCurrentUser = m.id === profile?.id;
+                      return (
+                        <TableRow key={m.id}>
+                          <TableCell className="font-medium">
+                            {m.name} {isCurrentUser && <span className="text-muted-foreground text-xs">(você)</span>}
+                          </TableCell>
+                          <TableCell>
+                            {isCurrentUser ? (
+                              <div className="flex gap-1">
+                                {m.roles.map(r => (
+                                  <Badge key={r} variant={r === 'ADMIN' ? 'default' : 'secondary'}>{r}</Badge>
+                                ))}
+                              </div>
+                            ) : (
+                              <Select value={m.roles[0] || 'OPERADOR'} onValueChange={v => changeRole(m.id, v as AppRole)}>
+                                <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="ADMIN">Admin</SelectItem>
+                                  <SelectItem value="OPERADOR">Operador</SelectItem>
+                                  <SelectItem value="VISUALIZADOR">Visualizador</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {!isCurrentUser && (
+                              <Button variant="ghost" size="icon" onClick={() => removeMember(m.id, m.name)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
