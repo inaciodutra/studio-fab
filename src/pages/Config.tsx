@@ -113,7 +113,7 @@ export default function Config() {
   };
 
   const cancelInvite = async (id: string) => {
-    const { error } = await supabase.from('invitations').update({ status: 'cancelled' } as any).eq('id', id);
+    const { error } = await supabase.from('invitations').delete().eq('id', id);
     if (error) toast.error(error.message);
     else {
       toast.success('Convite cancelado.');
