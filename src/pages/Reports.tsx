@@ -38,12 +38,19 @@ export default function Reports() {
   const totalProfit = orders.reduce((s, o) => s + (o.totals_json?.total_profit ?? 0), 0);
   const totalCost = orders.reduce((s, o) => s + (o.totals_json?.total_cost ?? 0), 0);
 
+  const sanitize = (v: string) => {
+    if (!v) return '';
+    if (/^[=+\-@\t\r]/.test(v)) return "'" + v;
+    return v;
+  };
+
   const exportCSV = () => {
     const header = 'Data,Cliente,Status,Faturamento,Custo,Lucro,Margem\n';
     const rows = orders.map(o =>
-      `${o.order_date},"${o.clients?.name ?? ''}",${o.status},${(o.totals_json?.total_revenue ?? 0).toFixed(2)},${(o.totals_json?.total_cost ?? 0).toFixed(2)},${(o.totals_json?.total_profit ?? 0).toFixed(2)},${(o.totals_json?.margin ?? 0).toFixed(1)}%`
+      `${o.order_date},"${sanitize(o.clients?.name ?? '').replace(/"/g, '""')}","${sanitize(o.status)}",${(o.totals_json?.total_revenue ?? 0).toFixed(2)},${(o.totals_json?.total_cost ?? 0).toFixed(2)},${(o.totals_json?.total_profit ?? 0).toFixed(2)},${(o.totals_json?.margin ?? 0).toFixed(1)}%`
     ).join('\n');
-    const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + header + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
