@@ -15,6 +15,7 @@ import Stock from "@/pages/Stock";
 import Orders from "@/pages/Orders";
 import Reports from "@/pages/Reports";
 import Import from "@/pages/Import";
+import PendingInvitations from "@/pages/PendingInvitations";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route element={<ProtectedRoute />}>
+            <Route path="/pending-invitations" element={<PendingInvitations />} />
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/orders" element={<Orders />} />
