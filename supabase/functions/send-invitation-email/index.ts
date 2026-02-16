@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
 
     if (!resendRes.ok) {
       console.error("Resend error:", resendData);
-      return new Response(JSON.stringify({ error: "Falha ao enviar email", details: resendData }), {
+      return new Response(JSON.stringify({ error: "Falha ao enviar email" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: "An unexpected error occurred" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
