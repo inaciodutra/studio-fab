@@ -94,22 +94,41 @@ export default function Config() {
   const sendInvite = async () => {
     if (!inviteEmail || !workspaceId) return;
     setInviting(true);
+    const emailToInvite = inviteEmail.toLowerCase().trim();
     const { error } = await supabase.from('invitations').insert({
       workspace_id: workspaceId,
-      email: inviteEmail.toLowerCase().trim(),
+      email: emailToInvite,
       role: inviteRole,
       invited_by: profile!.id,
     } as any);
-    setInviting(false);
     if (error) {
+      setInviting(false);
       if (error.code === '23505') toast.error('Este email já foi convidado.');
       else toast.error(error.message);
-    } else {
-      toast.success(`Convite enviado para ${inviteEmail}!`);
-      setInviteEmail('');
-      setInviteDialogOpen(false);
-      fetchTeam();
+      return;
     }
+
+    // Send invitation email via edge function
+    try {
+      const { data: workspace } = await supabase.from('workspaces').select('name').eq('id', workspaceId).single();
+      await supabase.functions.invoke('send-invitation-email', {
+        body: {
+          email: emailToInvite,
+          inviterName: profile?.name,
+          role: inviteRole,
+          workspaceName: workspace?.name,
+        },
+      });
+    } catch (emailErr) {
+      console.error('Erro ao enviar email:', emailErr);
+      // Don't block invite if email fails
+    }
+
+    setInviting(false);
+    toast.success(`Convite enviado para ${emailToInvite}!`);
+    setInviteEmail('');
+    setInviteDialogOpen(false);
+    fetchTeam();
   };
 
   const cancelInvite = async (id: string) => {
