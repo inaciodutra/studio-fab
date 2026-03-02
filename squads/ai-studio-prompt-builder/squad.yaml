@@ -1,0 +1,186 @@
+## ============================================================================
+## AI STUDIO PROMPT BUILDER - Squad Configuration
+## ============================================================================
+## Desenvolver fluxos de IA inovadores, testados e monetizaveis que demonstram
+## a Unique Ability de Inacio em escala — comecando com 3-5 fluxos validados
+## e evoluindo para produto recorrente.
+## ============================================================================
+
+name: ai-studio-prompt-builder
+title: "AI Studio Prompt Builder"
+version: 1.0.0
+author: "Jose Carlos Amorim (Inacio)"
+description: >
+  Squad que potencializa a Zona de Genialidade de Inacio — traduzir conceitos
+  complexos em frameworks visuais e fluxos de IA acionaveis. Combina a capacidade
+  Creator-Star de criar e comunicar com um time de agentes especializados que
+  sistematizam, testam e monetizam cada fluxo de IA produzido. O squad opera
+  na logica "Jose cria, o squad escala" — garantindo que 80%+ do tempo do
+  lider esteja na Zona de Genialidade (design de fluxos e traducao de complexidade)
+  e ZERO tempo em operacao, config ou admin.
+license: MIT
+
+## Slash command prefix for Claude Code
+slashPrefix: AIStudio
+patternPrefix: AISP
+
+aios:
+  minVersion: "2.1.0"
+  type: squad
+
+## ============================================================================
+## GENIUS ZONE ALIGNMENT
+## ============================================================================
+genius_zone:
+  unique_ability: >
+    Traduzir conceitos complexos em linguagem acessivel que inspira acao,
+    usando metaforas visuais e frameworks proprietarios que transformam
+    como as pessoas pensam sobre tecnologia e negocios.
+  wealth_profile: Creator-Star
+  kolbe_profile:
+    quick_start: 8
+    fact_finder: 6
+    follow_thru: 3
+    implementor: 3
+  clifton_dominant: Strategic Thinking
+  fascination_archetype: The Catalyst (Innovation + Passion)
+  upper_limit: "Medo de Proeminencia — 1a barreira oculta de Hendricks"
+  role_in_squad: "Tradutor-Chefe / Chief Nexialist — cria fluxos, traduz complexidade, e o rosto"
+  activities_keep:
+    - Criar frameworks e metaforas visuais para fluxos de IA
+    - Gravar conteudo imersivo demonstrando os fluxos
+    - Facilitar workshops ao vivo onde constroi fluxos em tempo real
+    - Conceituar novos fluxos e experiencias de IA
+    - Conectar dominios e criar sinteses originais
+  activities_delegate:
+    - Documentacao tecnica detalhada
+    - Testes de regressao e edge cases
+    - Empacotamento e distribuicao
+    - Config tecnica, deploy, automacoes
+    - Social media operacional
+
+## ============================================================================
+## SQUAD PURPOSE & MONETIZATION
+## ============================================================================
+purpose:
+  mission: >
+    Desenvolver fluxos de IA inovadores, testados e monetizaveis que demonstram
+    a Unique Ability de Inacio em escala.
+  vision: >
+    Ser a referencia em fluxos de IA para empreendedores brasileiros —
+    transformando prompts complexos em frameworks visuais que qualquer pessoa
+    aplica e monetiza.
+  target_user: >
+    Empreendedores e especialistas brasileiros (30-50 anos) que querem usar IA
+    para escalar seus negocios mas nao sabem por onde comecar. Dispostos a
+    investir R$497-R$2.500 em workshops e mentorias.
+  monetization:
+    phase_1:
+      product: "Workshop 'Construa Seu Fluxo de IA' (4h ao vivo)"
+      price: "R$497-997"
+      target: "5-10 participantes por edicao"
+      timeline: "Meses 1-2"
+      revenue_target: "R$5.000"
+    phase_2:
+      product: "Mentoria em Grupo 'Flow Builder' (8 semanas)"
+      price: "R$2.500"
+      target: "10-15 participantes"
+      timeline: "Meses 3-4"
+    phase_3:
+      product: "Biblioteca de Fluxos (assinatura mensal)"
+      price: "R$97/mes"
+      target: "100+ assinantes"
+      timeline: "Meses 5-6"
+
+## ============================================================================
+## TIER STRUCTURE
+## ============================================================================
+tiers:
+  orchestrator:
+    - aspb-chief
+  tier_1:
+    - flow-architect
+    - prompt-crafter
+  tier_2:
+    - monetization-strategist
+    - qa-validator
+    - content-amplifier
+
+## ============================================================================
+## COMPONENTS
+## ============================================================================
+components:
+  agents:
+    - aspb-chief.md
+    - flow-architect.md
+    - prompt-crafter.md
+    - monetization-strategist.md
+    - qa-validator.md
+    - content-amplifier.md
+  tasks:
+    - design-flow.md
+    - build-flow.md
+    - test-flow.md
+    - package-flow.md
+    - monetize-flow.md
+    - amplify-content.md
+  workflows:
+    - flow-pipeline.md
+  checklists:
+    - flow-quality-checklist.md
+  templates:
+    - flow-template.md
+    - workshop-script-template.md
+  tools: []
+  scripts: []
+
+## ============================================================================
+## CONFIGURATION
+## ============================================================================
+config:
+  extends: extend
+
+## ============================================================================
+## DEPENDENCIES
+## ============================================================================
+dependencies:
+  node: []
+  python: []
+  squads:
+    optional:
+      - zona-genialidade
+      - copywriter-os
+      - content-distillery
+
+## ============================================================================
+## QUALITY GATES
+## ============================================================================
+quality_gates:
+  - id: QG-DESIGN
+    name: "Flow Design Approved"
+    transition: "Idea -> Build"
+    blocking: true
+  - id: QG-BUILD
+    name: "Flow Built & Functional"
+    transition: "Build -> Test"
+    blocking: true
+  - id: QG-TEST
+    name: "Flow Tested & Validated"
+    transition: "Test -> Package"
+    blocking: true
+  - id: QG-SHIP
+    name: "Flow Packaged & Ready"
+    transition: "Package -> Monetize"
+    blocking: true
+
+## ============================================================================
+## TAGS
+## ============================================================================
+tags:
+  - ai-flows
+  - prompt-engineering
+  - monetization
+  - genius-zone
+  - creator-star
+  - workshops
+  - translation-of-complexity

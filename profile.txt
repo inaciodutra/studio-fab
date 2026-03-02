@@ -1,0 +1,32 @@
+# Claude Status Line
+function Show-ClaudeStatus {
+    python C:\tools\claude-status.py
+}
+
+function Track-ClaudeUsage {
+    param([int]$tokens = 100)
+    python C:\tools\claude-status.py track $tokens
+}
+
+function Reset-ClaudeStatus {
+    python C:\tools\claude-status.py reset
+}
+
+# Aliases curtos
+Set-Alias cs Show-ClaudeStatus
+Set-Alias ct Track-ClaudeUsage
+Set-Alias cr Reset-ClaudeStatus
+
+# Mostrar status automaticamente ao abrir terminal (opcional)
+Show-ClaudeStatus
+
+# Adicione no $PROFILE:
+
+function prompt {
+    $status = python C:\tools\claude-status.py 2>$null
+    if ($status) {
+        Write-Host $status -ForegroundColor Green
+    }
+    "PS $($executionContext.SessionState.Path.CurrentLocation)> "
+}
+```

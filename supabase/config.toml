@@ -1,0 +1,10 @@
+project_id = "jpoufdxggxumqukhjtlm"
+
+[functions.send-invitation-email]
+verify_jwt = false
+
+[functions.accept-invitation]
+verify_jwt = false
+
+[functions.generate-product-image]
+verify_jwt = false
